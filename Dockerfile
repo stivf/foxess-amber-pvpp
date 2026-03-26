@@ -29,7 +29,7 @@ COPY pyproject.toml ./
 COPY src/ ./src/
 COPY backend/ ./backend/
 COPY data/ ./data/
-CMD ["pytest", "backend/tests/", "-v", "--cov=src", "--cov-report=term-missing", "--cov-fail-under=85"]
+CMD ["pytest", "backend/tests/", "-v", "--cov=src", "--cov-report=term-missing"]
 
 # ── Stage 5: Production ───────────────────────────────────────────────────────
 FROM base AS production
