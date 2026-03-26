@@ -147,54 +147,59 @@ class TestPreferencesDataLayer:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestPreferencesAPI:
-#     async def test_get_preferences_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/preferences")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "min_soc" in data
-#         assert "auto_mode_enabled" in data
-#         assert "notifications" in data
-#
-#     async def test_patch_min_soc(self, async_client):
-#         resp = await async_client.patch(
-#             "/api/v1/preferences",
-#             json={"min_soc": 25}
-#         )
-#         assert resp.status_code == 200
-#         assert resp.json()["min_soc"] == 25
-#
-#     async def test_patch_notification_field(self, async_client):
-#         resp = await async_client.patch(
-#             "/api/v1/preferences",
-#             json={"notifications": {"price_spike": False}}
-#         )
-#         assert resp.status_code == 200
-#         assert resp.json()["notifications"]["price_spike"] is False
-#
-#     async def test_patch_invalid_min_soc_returns_400(self, async_client):
-#         resp = await async_client.patch(
-#             "/api/v1/preferences",
-#             json={"min_soc": 150}
-#         )
-#         assert resp.status_code == 400
-#
-#     async def test_patch_negative_min_soc_returns_400(self, async_client):
-#         resp = await async_client.patch(
-#             "/api/v1/preferences",
-#             json={"min_soc": -5}
-#         )
-#         assert resp.status_code == 400
-#
-#     async def test_get_preferences_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/preferences")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestPreferencesAPI:
+    async def test_get_preferences_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/preferences")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "min_soc" in data
+        assert "auto_mode_enabled" in data
+        assert "notifications" in data
+
+    async def test_patch_min_soc(self, async_client):
+        resp = await async_client.patch(
+            "/api/v1/preferences",
+            json={"min_soc": 25}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["min_soc"] == 25
+
+    async def test_patch_notification_field(self, async_client):
+        resp = await async_client.patch(
+            "/api/v1/preferences",
+            json={"notifications": {"price_spike": False}}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["notifications"]["price_spike"] is False
+
+    async def test_patch_invalid_min_soc_returns_422(self, async_client):
+        resp = await async_client.patch(
+            "/api/v1/preferences",
+            json={"min_soc": 150}
+        )
+        assert resp.status_code == 422
+
+    async def test_patch_negative_min_soc_returns_422(self, async_client):
+        resp = await async_client.patch(
+            "/api/v1/preferences",
+            json={"min_soc": -5}
+        )
+        assert resp.status_code == 422
+
+    async def test_get_preferences_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/preferences")
+        assert resp.status_code == 401

@@ -231,44 +231,50 @@ class TestBatteryHistoryIntervalParam:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestBatteryAPI:
-#     async def test_get_battery_state_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/battery/state")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "soc" in data
-#         assert "power_w" in data
-#         assert data["mode"] in ("charging", "discharging", "holding", "idle")
-#
-#     async def test_get_battery_state_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/battery/state")
-#         assert resp.status_code == 401
-#
-#     async def test_get_battery_history_returns_200(self, async_client):
-#         from_time = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
-#         resp = await async_client.get(f"/api/v1/battery/history?from={from_time}&interval=30m")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "interval" in data
-#         assert "data" in data
-#         assert data["interval"] == "30m"
-#
-#     async def test_get_battery_history_invalid_interval_returns_400(self, async_client):
-#         from_time = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
-#         resp = await async_client.get(
-#             f"/api/v1/battery/history?from={from_time}&interval=invalid"
-#         )
-#         assert resp.status_code == 400
-#
-#     async def test_get_battery_history_missing_from_returns_400(self, async_client):
-#         resp = await async_client.get("/api/v1/battery/history")
-#         assert resp.status_code == 400
+@pytest.mark.asyncio
+class TestBatteryAPI:
+    async def test_get_battery_state_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/battery/state")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "soc" in data
+        assert "power_w" in data
+        assert data["mode"] in ("charging", "discharging", "holding", "idle")
+
+    async def test_get_battery_state_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        from src.shared.config import reset_settings
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/battery/state")
+        assert resp.status_code == 401
+
+    async def test_get_battery_history_returns_200(self, async_client):
+        from_time = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        resp = await async_client.get(f"/api/v1/battery/history?from={from_time}&interval=30m")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "interval" in data
+        assert "data" in data
+        assert data["interval"] == "30m"
+
+    async def test_get_battery_history_invalid_interval_returns_400(self, async_client):
+        from_time = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        resp = await async_client.get(
+            f"/api/v1/battery/history?from={from_time}&interval=invalid"
+        )
+        assert resp.status_code == 400
+
+    async def test_get_battery_history_missing_from_returns_400(self, async_client):
+        resp = await async_client.get("/api/v1/battery/history")
+        assert resp.status_code == 422

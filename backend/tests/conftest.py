@@ -287,9 +287,19 @@ async def async_client(seeded_db_path: pathlib.Path) -> AsyncGenerator:
     os.environ["DB_PATH"] = str(seeded_db_path)
     os.environ["API_KEY"] = TEST_API_KEY
 
-    try:
-        from httpx import AsyncClient, ASGITransport
-        from src.api.main import create_app
+    # Clear settings cache so the test DB path is picked up
+    from src.shared.config import reset_settings
+    reset_settings()
+
+    from httpx import AsyncClient, ASGITransport
+    from src.api.main import create_app
+    from unittest.mock import patch, MagicMock
+
+    # Patch the scheduler so it doesn't start background jobs during tests
+    with patch("src.api.main.BackgroundScheduler") as mock_scheduler_cls:
+        mock_scheduler = MagicMock()
+        mock_scheduler.get_jobs.return_value = []
+        mock_scheduler_cls.return_value = mock_scheduler
 
         app = create_app()
         async with AsyncClient(
@@ -298,5 +308,6 @@ async def async_client(seeded_db_path: pathlib.Path) -> AsyncGenerator:
             headers={"Authorization": f"Bearer {TEST_API_KEY}"},
         ) as client:
             yield client
-    except ImportError:
-        pytest.skip("src.api.main not yet implemented — skipping FastAPI integration tests")
+
+    # Clear settings cache again after test so it doesn't leak
+    reset_settings()

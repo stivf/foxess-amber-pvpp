@@ -258,35 +258,40 @@ class TestSavingsAnalyticsDataLayer:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestAnalyticsAPI:
-#     async def test_get_savings_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/analytics/savings?period=week")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "period" in data
-#         assert "total_savings_dollars" in data
-#         assert "breakdown" in data
-#
-#     async def test_get_savings_with_date_range(self, async_client):
-#         resp = await async_client.get(
-#             "/api/v1/analytics/savings?period=month"
-#             "&from=2026-03-01T00:00:00Z&to=2026-03-25T23:59:59Z"
-#         )
-#         assert resp.status_code == 200
-#
-#     async def test_get_savings_invalid_period_returns_400(self, async_client):
-#         resp = await async_client.get("/api/v1/analytics/savings?period=decade")
-#         assert resp.status_code == 400
-#
-#     async def test_get_savings_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/analytics/savings?period=day")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestAnalyticsAPI:
+    async def test_get_savings_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/analytics/savings?period=week")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "period" in data
+        assert "total_savings_dollars" in data
+        assert "breakdown" in data
+
+    async def test_get_savings_with_date_range(self, async_client):
+        resp = await async_client.get(
+            "/api/v1/analytics/savings?period=month"
+            "&from=2026-03-01T00:00:00Z&to=2026-03-25T23:59:59Z"
+        )
+        assert resp.status_code == 200
+
+    async def test_get_savings_invalid_period_returns_400(self, async_client):
+        resp = await async_client.get("/api/v1/analytics/savings?period=decade")
+        assert resp.status_code == 400
+
+    async def test_get_savings_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/analytics/savings?period=day")
+        assert resp.status_code == 401

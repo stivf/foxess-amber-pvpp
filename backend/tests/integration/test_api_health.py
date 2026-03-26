@@ -216,39 +216,44 @@ class TestHealthUptime:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestHealthAPI:
-#     async def test_get_health_returns_200_without_auth(self):
-#         """Health endpoint is exempt from authentication."""
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as client:
-#             resp = await client.get("/api/v1/health")
-#         assert resp.status_code == 200
-#
-#     async def test_get_health_response_shape(self, async_client):
-#         resp = await async_client.get("/api/v1/health")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "status" in data
-#         assert "version" in data
-#         assert "uptime_seconds" in data
-#         assert "services" in data
-#
-#     async def test_get_health_services_fields(self, async_client):
-#         resp = await async_client.get("/api/v1/health")
-#         services = resp.json()["services"]
-#         assert "amber_api" in services
-#         assert "foxess_api" in services
-#         assert "solar_api" in services
-#         assert "sqlite" in services
-#
-#     async def test_get_health_status_is_valid_value(self, async_client):
-#         resp = await async_client.get("/api/v1/health")
-#         status = resp.json()["status"]
-#         assert status in ("healthy", "degraded", "unhealthy")
+@pytest.mark.asyncio
+class TestHealthAPI:
+    async def test_get_health_returns_200_without_auth(self):
+        """Health endpoint is exempt from authentication."""
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as client:
+            resp = await client.get("/health")
+        assert resp.status_code == 200
+
+    async def test_get_health_response_shape(self, async_client):
+        resp = await async_client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "status" in data
+        assert "version" in data
+        assert "uptime_seconds" in data
+        assert "services" in data
+
+    async def test_get_health_services_fields(self, async_client):
+        resp = await async_client.get("/health")
+        services = resp.json()["services"]
+        assert "amber_api" in services
+        assert "foxess_api" in services
+        assert "solar_api" in services
+        assert "sqlite" in services
+
+    async def test_get_health_status_is_valid_value(self, async_client):
+        resp = await async_client.get("/health")
+        status = resp.json()["status"]
+        assert status in ("healthy", "degraded", "unhealthy")

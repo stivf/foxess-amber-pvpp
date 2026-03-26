@@ -248,43 +248,48 @@ class TestStatusDataLayer:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestStatusAPI:
-#     async def test_get_status_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/status")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "battery" in data
-#         assert "price" in data
-#         assert "solar" in data
-#         assert "grid" in data
-#         assert "schedule" in data
-#         assert "active_profile" in data
-#         assert "savings" in data
-#
-#     async def test_get_status_battery_fields(self, async_client):
-#         resp = await async_client.get("/api/v1/status")
-#         battery = resp.json()["battery"]
-#         assert "soc" in battery
-#         assert "power_w" in battery
-#         assert "mode" in battery
-#         assert battery["mode"] in ("charging", "discharging", "holding", "idle")
-#
-#     async def test_get_status_price_fields(self, async_client):
-#         resp = await async_client.get("/api/v1/status")
-#         price = resp.json()["price"]
-#         assert "current_per_kwh" in price
-#         assert "feed_in_per_kwh" in price
-#         assert "descriptor" in price
-#
-#     async def test_get_status_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/status")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestStatusAPI:
+    async def test_get_status_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/status")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "battery" in data
+        assert "price" in data
+        assert "solar" in data
+        assert "grid" in data
+        assert "schedule" in data
+        assert "active_profile" in data
+        assert "savings" in data
+
+    async def test_get_status_battery_fields(self, async_client):
+        resp = await async_client.get("/api/v1/status")
+        battery = resp.json()["battery"]
+        assert "soc" in battery
+        assert "power_w" in battery
+        assert "mode" in battery
+        assert battery["mode"] in ("charging", "discharging", "holding", "idle")
+
+    async def test_get_status_price_fields(self, async_client):
+        resp = await async_client.get("/api/v1/status")
+        price = resp.json()["price"]
+        assert "current_per_kwh" in price
+        assert "feed_in_per_kwh" in price
+        assert "descriptor" in price
+
+    async def test_get_status_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/status")
+        assert resp.status_code == 401

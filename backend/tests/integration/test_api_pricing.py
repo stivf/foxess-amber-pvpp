@@ -253,43 +253,48 @@ class TestPricingHistoryDataLayer:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestPricingAPI:
-#     async def test_get_current_pricing_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/pricing/current")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "current" in data
-#         assert "forecast" in data
-#
-#     async def test_get_current_pricing_fields(self, async_client):
-#         resp = await async_client.get("/api/v1/pricing/current")
-#         current = resp.json()["current"]
-#         assert "per_kwh" in current
-#         assert "feed_in_per_kwh" in current
-#         assert "descriptor" in current
-#         assert current["descriptor"] in ("spike", "high", "neutral", "low", "negative")
-#
-#     async def test_get_pricing_history_returns_200(self, async_client):
-#         from_time = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
-#         resp = await async_client.get(f"/api/v1/pricing/history?from={from_time}")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "interval" in data
-#         assert "data" in data
-#
-#     async def test_get_pricing_history_missing_from_returns_400(self, async_client):
-#         resp = await async_client.get("/api/v1/pricing/history")
-#         assert resp.status_code == 400
-#
-#     async def test_get_pricing_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/pricing/current")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestPricingAPI:
+    async def test_get_current_pricing_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/pricing/current")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "current" in data
+        assert "forecast" in data
+
+    async def test_get_current_pricing_fields(self, async_client):
+        resp = await async_client.get("/api/v1/pricing/current")
+        current = resp.json()["current"]
+        assert "per_kwh" in current
+        assert "feed_in_per_kwh" in current
+        assert "descriptor" in current
+        assert current["descriptor"] in ("spike", "high", "neutral", "low", "negative")
+
+    async def test_get_pricing_history_returns_200(self, async_client):
+        from_time = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        resp = await async_client.get(f"/api/v1/pricing/history?from={from_time}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "interval" in data
+        assert "data" in data
+
+    async def test_get_pricing_history_missing_from_returns_422(self, async_client):
+        resp = await async_client.get("/api/v1/pricing/history")
+        assert resp.status_code == 422
+
+    async def test_get_pricing_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/pricing/current")
+        assert resp.status_code == 401

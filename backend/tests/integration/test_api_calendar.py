@@ -465,100 +465,105 @@ class TestCalendarActiveEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestCalendarAPI:
-#     async def test_get_calendar_rules_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/calendar/rules")
-#         assert resp.status_code == 200
-#         assert "rules" in resp.json()
-#
-#     async def test_create_calendar_rule_returns_201(self, async_client):
-#         payload = {
-#             "profile_id": "prof_default",
-#             "name": "Morning Charge",
-#             "days_of_week": [0, 1, 2, 3, 4],
-#             "start_time": "00:00",
-#             "end_time": "07:00",
-#             "priority": 5,
-#         }
-#         resp = await async_client.post("/api/v1/calendar/rules", json=payload)
-#         assert resp.status_code == 201
-#         data = resp.json()
-#         assert "id" in data
-#         assert data["name"] == "Morning Charge"
-#
-#     async def test_patch_calendar_rule_returns_200(self, async_client):
-#         # Create first
-#         create_resp = await async_client.post("/api/v1/calendar/rules", json={
-#             "profile_id": "prof_default",
-#             "name": "Patch Me",
-#             "days_of_week": [0],
-#             "start_time": "10:00",
-#             "end_time": "12:00",
-#         })
-#         rule_id = create_resp.json()["id"]
-#         resp = await async_client.patch(
-#             f"/api/v1/calendar/rules/{rule_id}",
-#             json={"priority": 15}
-#         )
-#         assert resp.status_code == 200
-#         assert resp.json()["priority"] == 15
-#
-#     async def test_delete_calendar_rule_returns_204(self, async_client):
-#         create_resp = await async_client.post("/api/v1/calendar/rules", json={
-#             "profile_id": "prof_default",
-#             "name": "Delete Me",
-#             "days_of_week": [6],
-#             "start_time": "08:00",
-#             "end_time": "09:00",
-#         })
-#         rule_id = create_resp.json()["id"]
-#         resp = await async_client.delete(f"/api/v1/calendar/rules/{rule_id}")
-#         assert resp.status_code == 204
-#
-#     async def test_delete_nonexistent_rule_returns_404(self, async_client):
-#         resp = await async_client.delete("/api/v1/calendar/rules/nonexistent")
-#         assert resp.status_code == 404
-#
-#     async def test_create_override_returns_201(self, async_client):
-#         payload = {
-#             "profile_id": "prof_default",
-#             "name": "Holiday",
-#             "start_datetime": "2026-04-01T00:00:00+11:00",
-#             "end_datetime": "2026-04-02T00:00:00+11:00",
-#         }
-#         resp = await async_client.post("/api/v1/calendar/overrides", json=payload)
-#         assert resp.status_code == 201
-#         data = resp.json()
-#         assert "id" in data
-#
-#     async def test_delete_override_returns_204(self, async_client):
-#         create_resp = await async_client.post("/api/v1/calendar/overrides", json={
-#             "profile_id": "prof_default",
-#             "name": "Temp Override",
-#             "start_datetime": "2026-04-05T00:00:00+11:00",
-#             "end_datetime": "2026-04-06T00:00:00+11:00",
-#         })
-#         override_id = create_resp.json()["id"]
-#         resp = await async_client.delete(f"/api/v1/calendar/overrides/{override_id}")
-#         assert resp.status_code == 204
-#
-#     async def test_get_calendar_active_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/calendar/active")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "profile" in data
-#         assert "source" in data
-#         assert data["source"] in ("default", "recurring_rule", "one_off_override")
-#
-#     async def test_calendar_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app),
-#                                base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/calendar/rules")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestCalendarAPI:
+    async def test_get_calendar_rules_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/calendar/rules")
+        assert resp.status_code == 200
+        assert "rules" in resp.json()
+
+    async def test_create_calendar_rule_returns_201(self, async_client):
+        payload = {
+            "profile_id": "prof_default",
+            "name": "Morning Charge",
+            "days_of_week": [0, 1, 2, 3, 4],
+            "start_time": "00:00",
+            "end_time": "07:00",
+            "priority": 5,
+        }
+        resp = await async_client.post("/api/v1/calendar/rules", json=payload)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "id" in data
+        assert data["name"] == "Morning Charge"
+
+    async def test_patch_calendar_rule_returns_200(self, async_client):
+        # Create first
+        create_resp = await async_client.post("/api/v1/calendar/rules", json={
+            "profile_id": "prof_default",
+            "name": "Patch Me",
+            "days_of_week": [0],
+            "start_time": "10:00",
+            "end_time": "12:00",
+        })
+        rule_id = create_resp.json()["id"]
+        resp = await async_client.patch(
+            f"/api/v1/calendar/rules/{rule_id}",
+            json={"priority": 15}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["priority"] == 15
+
+    async def test_delete_calendar_rule_returns_204(self, async_client):
+        create_resp = await async_client.post("/api/v1/calendar/rules", json={
+            "profile_id": "prof_default",
+            "name": "Delete Me",
+            "days_of_week": [6],
+            "start_time": "08:00",
+            "end_time": "09:00",
+        })
+        rule_id = create_resp.json()["id"]
+        resp = await async_client.delete(f"/api/v1/calendar/rules/{rule_id}")
+        assert resp.status_code == 204
+
+    async def test_delete_nonexistent_rule_returns_404(self, async_client):
+        resp = await async_client.delete("/api/v1/calendar/rules/nonexistent")
+        assert resp.status_code == 404
+
+    async def test_create_override_returns_201(self, async_client):
+        payload = {
+            "profile_id": "prof_default",
+            "name": "Holiday",
+            "start_datetime": "2026-04-01T00:00:00+11:00",
+            "end_datetime": "2026-04-02T00:00:00+11:00",
+        }
+        resp = await async_client.post("/api/v1/calendar/overrides", json=payload)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "id" in data
+
+    async def test_delete_override_returns_204(self, async_client):
+        create_resp = await async_client.post("/api/v1/calendar/overrides", json={
+            "profile_id": "prof_default",
+            "name": "Temp Override",
+            "start_datetime": "2026-04-05T00:00:00+11:00",
+            "end_datetime": "2026-04-06T00:00:00+11:00",
+        })
+        override_id = create_resp.json()["id"]
+        resp = await async_client.delete(f"/api/v1/calendar/overrides/{override_id}")
+        assert resp.status_code == 204
+
+    async def test_get_calendar_active_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/calendar/active")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "profile" in data
+        assert "source" in data
+        assert data["source"] in ("default", "recurring_rule", "one_off_override")
+
+    async def test_calendar_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app),
+                               base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/calendar/rules")
+        assert resp.status_code == 401

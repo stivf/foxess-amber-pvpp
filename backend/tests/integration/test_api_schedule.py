@@ -179,41 +179,41 @@ class TestScheduleOverrideContract:
 
 
 # ---------------------------------------------------------------------------
-# FastAPI endpoint tests (uncomment when app is implemented)
+# FastAPI endpoint tests
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestScheduleAPI:
-#     async def test_get_schedule_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/schedule")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "slots" in data
-#         assert "generated_at" in data
-#
-#     async def test_post_override_returns_200(self, async_client):
-#         future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
-#         payload = {
-#             "action": "DISCHARGE",
-#             "end_time": future_time,
-#             "reason": "Test override",
-#         }
-#         resp = await async_client.post("/api/v1/schedule/override", json=payload)
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert data["action"] == "DISCHARGE"
-#         assert data["status"] == "active"
-#
-#     async def test_post_override_invalid_action_returns_400(self, async_client):
-#         payload = {"action": "INVALID", "end_time": "2026-03-25T14:00:00+11:00"}
-#         resp = await async_client.post("/api/v1/schedule/override", json=payload)
-#         assert resp.status_code == 400
-#
-#     async def test_delete_override_returns_200(self, async_client):
-#         # Set up an override first
-#         future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
-#         await async_client.post("/api/v1/schedule/override",
-#                                  json={"action": "HOLD", "end_time": future_time})
-#         resp = await async_client.delete("/api/v1/schedule/override")
-#         assert resp.status_code == 200
-#         assert resp.json()["status"] == "cancelled"
+@pytest.mark.asyncio
+class TestScheduleAPI:
+    async def test_get_schedule_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/schedule")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "slots" in data
+        assert "generated_at" in data
+
+    async def test_post_override_returns_200(self, async_client):
+        future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        payload = {
+            "action": "DISCHARGE",
+            "end_time": future_time,
+            "reason": "Test override",
+        }
+        resp = await async_client.post("/api/v1/schedule/override", json=payload)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["action"] == "DISCHARGE"
+        assert data["status"] == "active"
+
+    async def test_post_override_invalid_action_returns_422(self, async_client):
+        payload = {"action": "INVALID", "end_time": "2026-03-25T14:00:00+11:00"}
+        resp = await async_client.post("/api/v1/schedule/override", json=payload)
+        assert resp.status_code == 422
+
+    async def test_delete_override_returns_200(self, async_client):
+        # Set up an override first
+        future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        await async_client.post("/api/v1/schedule/override",
+                                 json={"action": "HOLD", "end_time": future_time})
+        resp = await async_client.delete("/api/v1/schedule/override")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "cancelled"

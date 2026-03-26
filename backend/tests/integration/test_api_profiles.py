@@ -246,75 +246,79 @@ class TestCalendarOverridesDataLayer:
 
 # ---------------------------------------------------------------------------
 # FastAPI endpoint tests
-# (Uncomment and expand when src/api/main.py is implemented)
 # ---------------------------------------------------------------------------
 
-# @pytest.mark.asyncio
-# class TestProfilesAPI:
-#     async def test_get_profiles_returns_200(self, async_client):
-#         resp = await async_client.get("/api/v1/profiles")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert "profiles" in data
-#         assert len(data["profiles"]) >= 1
-#
-#     async def test_get_profile_by_id(self, async_client):
-#         resp = await async_client.get("/api/v1/profiles/prof_default")
-#         assert resp.status_code == 200
-#         data = resp.json()
-#         assert data["id"] == "prof_default"
-#
-#     async def test_get_profile_404_for_unknown_id(self, async_client):
-#         resp = await async_client.get("/api/v1/profiles/nonexistent")
-#         assert resp.status_code == 404
-#
-#     async def test_create_profile_returns_201(self, async_client):
-#         payload = {
-#             "name": "Test Profile",
-#             "export_aggressiveness": 0.7,
-#             "preservation_aggressiveness": 0.3,
-#             "import_aggressiveness": 0.5,
-#         }
-#         resp = await async_client.post("/api/v1/profiles", json=payload)
-#         assert resp.status_code == 201
-#         data = resp.json()
-#         assert data["name"] == "Test Profile"
-#         assert "id" in data
-#
-#     async def test_patch_profile_returns_200(self, async_client):
-#         resp = await async_client.patch(
-#             "/api/v1/profiles/prof_default",
-#             json={"export_aggressiveness": 0.8}
-#         )
-#         assert resp.status_code == 200
-#         assert resp.json()["export_aggressiveness"] == pytest.approx(0.8)
-#
-#     async def test_delete_default_profile_returns_409(self, async_client):
-#         resp = await async_client.delete("/api/v1/profiles/prof_default")
-#         assert resp.status_code == 409
-#
-#     async def test_delete_nonexistent_profile_returns_404(self, async_client):
-#         resp = await async_client.delete("/api/v1/profiles/nonexistent")
-#         assert resp.status_code == 404
-#
-#     async def test_set_default_profile(self, async_client):
-#         # Create a profile first
-#         create_resp = await async_client.post("/api/v1/profiles", json={
-#             "name": "New Default",
-#             "export_aggressiveness": 0.6,
-#             "preservation_aggressiveness": 0.4,
-#             "import_aggressiveness": 0.6,
-#         })
-#         new_id = create_resp.json()["id"]
-#
-#         resp = await async_client.post(f"/api/v1/profiles/{new_id}/set-default")
-#         assert resp.status_code == 200
-#         assert resp.json()["is_default"] is True
-#
-#     async def test_requires_auth(self, async_client):
-#         from httpx import AsyncClient, ASGITransport
-#         from src.api.main import create_app
-#         app = create_app()
-#         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as unauthed:
-#             resp = await unauthed.get("/api/v1/profiles")
-#         assert resp.status_code == 401
+@pytest.mark.asyncio
+class TestProfilesAPI:
+    async def test_get_profiles_returns_200(self, async_client):
+        resp = await async_client.get("/api/v1/profiles")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "profiles" in data
+        assert len(data["profiles"]) >= 1
+
+    async def test_get_profile_by_id(self, async_client):
+        resp = await async_client.get("/api/v1/profiles/prof_default")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["id"] == "prof_default"
+
+    async def test_get_profile_404_for_unknown_id(self, async_client):
+        resp = await async_client.get("/api/v1/profiles/nonexistent")
+        assert resp.status_code == 404
+
+    async def test_create_profile_returns_201(self, async_client):
+        payload = {
+            "name": "Test Profile",
+            "export_aggressiveness": 0.7,
+            "preservation_aggressiveness": 0.3,
+            "import_aggressiveness": 0.5,
+        }
+        resp = await async_client.post("/api/v1/profiles", json=payload)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["name"] == "Test Profile"
+        assert "id" in data
+
+    async def test_patch_profile_returns_200(self, async_client):
+        resp = await async_client.patch(
+            "/api/v1/profiles/prof_default",
+            json={"export_aggressiveness": 0.8}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["export_aggressiveness"] == pytest.approx(0.8)
+
+    async def test_delete_default_profile_returns_409(self, async_client):
+        resp = await async_client.delete("/api/v1/profiles/prof_default")
+        assert resp.status_code == 409
+
+    async def test_delete_nonexistent_profile_returns_404(self, async_client):
+        resp = await async_client.delete("/api/v1/profiles/nonexistent")
+        assert resp.status_code == 404
+
+    async def test_set_default_profile(self, async_client):
+        # Create a profile first
+        create_resp = await async_client.post("/api/v1/profiles", json={
+            "name": "New Default",
+            "export_aggressiveness": 0.6,
+            "preservation_aggressiveness": 0.4,
+            "import_aggressiveness": 0.6,
+        })
+        new_id = create_resp.json()["id"]
+
+        resp = await async_client.post(f"/api/v1/profiles/{new_id}/set-default")
+        assert resp.status_code == 200
+        assert resp.json()["is_default"] is True
+
+    async def test_requires_auth(self, async_client):
+        from httpx import AsyncClient, ASGITransport
+        from src.api.main import create_app
+        from unittest.mock import patch, MagicMock
+        with patch("src.api.main.BackgroundScheduler") as mock_sched_cls:
+            mock_sched = MagicMock()
+            mock_sched.get_jobs.return_value = []
+            mock_sched_cls.return_value = mock_sched
+            app = create_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as unauthed:
+            resp = await unauthed.get("/api/v1/profiles")
+        assert resp.status_code == 401
