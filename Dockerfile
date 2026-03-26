@@ -1,6 +1,6 @@
 # ── Stage 1: Export dependencies from Poetry ──────────────────────────────────
 FROM python:3.12-slim AS deps
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir poetry poetry-plugin-export
 WORKDIR /app
 COPY pyproject.toml poetry.lock* ./
 RUN poetry export -f requirements.txt --without-hashes -o requirements.txt && \
