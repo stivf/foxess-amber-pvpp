@@ -22,6 +22,10 @@ foxesscloud = ">=2.9.8"
 # HTTP client (Open-Meteo solar forecast)
 httpx = ">=0.27.0"
 
+# foxesscloud undeclared transitive deps
+requests = ">=2.31.0"
+matplotlib = ">=3.8.0"
+
 # In-process scheduler (collectors + decision engine)
 apscheduler = ">=3.10.0"
 
