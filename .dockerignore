@@ -1,0 +1,15 @@
+.git
+.env
+*.pyc
+__pycache__
+.pytest_cache
+.coverage
+htmlcov
+data/battery_brain.db
+data/battery_brain.db-wal
+data/battery_brain.db-shm
+*.egg-info
+dist
+.venv
+node_modules
+docs

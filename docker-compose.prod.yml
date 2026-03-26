@@ -1,0 +1,27 @@
+# Battery Brain — Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up -d
+# Single worker, no hot reload, non-root user, read-only source
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data        # SQLite DB persisted on host (backup = copy this dir)
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=info
+      - DB_PATH=/app/data/battery_brain.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
