@@ -32,9 +32,6 @@ data/*.db-shm
 .DS_Store
 Thumbs.db
 
-# Poetry
-poetry.lock
-
 # Claude
 .claude/
 
