@@ -19,8 +19,8 @@ COPY . .
 COPY ../shared /shared
 
 # Set build-time env vars (overridable)
-ARG NEXT_PUBLIC_API_URL=http://localhost:3000
-ARG NEXT_PUBLIC_WS_URL=ws://localhost:3000
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:4000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 
@@ -32,7 +32,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=4001
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
@@ -45,6 +45,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3001
+EXPOSE 4001
 
 CMD ["node", "server.js"]
