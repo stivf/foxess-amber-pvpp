@@ -12,16 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install dependencies
-        run: poetry install
-
-      - name: Run tests
-        run: poetry run pytest backend/tests/ -v --cov=src --cov-report=term-missing --cov-fail-under=85
+      - name: Run tests in Docker
+        run: docker build --target test . --tag battery-brain-test && docker run --rm battery-brain-test
